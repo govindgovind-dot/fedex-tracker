@@ -83,14 +83,10 @@
   .refresh-btn:hover { background: var(--card); color: var(--text); }
   .refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
   #transit-summary { display: none; }
-  @media (max-width: 640px) {
-    header { padding: 14px 16px; }
-    main { padding: 16px 12px; }
-  }
+  @media (max-width: 640px) { header { padding: 14px 16px; } main { padding: 16px 12px; } }
 </style>
 </head>
 <body>
-
 <header>
   <div>
     <h1>FedEx Shipment Tracker</h1>
@@ -98,7 +94,6 @@
   </div>
   <button class="refresh-btn" id="refresh-btn" onclick="loadData()">&#8635; Refresh</button>
 </header>
-
 <main>
   <div class="stats" id="stats-bar"></div>
   <div class="tabs">
@@ -127,10 +122,8 @@
   </div>
   <div id="empty-msg" style="display:none; text-align:center; padding:40px; color:var(--muted);">No shipments match your filter.</div>
 </main>
-
 <script>
 const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyTzfWHx3qdNOlS3BcfJoTM4rhOnXCzCuh4Bv4lvB77tqEHU4ZIjaMuXiU8M0H0KLw6/exec";
-
 let allData = { active: [], delivered: [] };
 let activeTab = "active";
 let activeFilter = "all";
