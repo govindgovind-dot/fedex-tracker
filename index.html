@@ -32,29 +32,23 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.6; }
-
   header { background: var(--card); border-bottom: 0.5px solid var(--border); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
   h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
   #last-refresh { font-size: 12px; color: var(--hint); }
   main { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
-
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
   .stat { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--sm); padding: 14px 16px; }
   .stat-val { font-size: 24px; font-weight: 600; line-height: 1; }
   .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-  /* transit days summary cards */
   .transit-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
   .transit-card { background: var(--teal-bg); border: 0.5px solid rgba(0,0,0,.06); border-radius: var(--sm); padding: 14px 16px; }
   .transit-card .tc-val { font-size: 26px; font-weight: 700; color: var(--teal-tx); line-height: 1; }
   .transit-card .tc-lbl { font-size: 12px; color: var(--teal-tx); opacity: .75; margin-top: 4px; }
-
   .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .pill { font-size: 12px; padding: 5px 13px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
   .pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
   .search { flex: 1; min-width: 160px; max-width: 320px; padding: 6px 12px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--card); color: var(--text); font-size: 13px; outline: none; }
   .search:focus { border-color: var(--muted); }
-
   .table-wrap { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--hint); padding: 10px 14px; text-align: left; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; background: var(--card); white-space: nowrap; }
@@ -64,14 +58,11 @@
   td { padding: 11px 14px; border-bottom: 0.5px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--bg); }
-
-  /* transit days cell — colour-coded */
   .days-pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
   .days-fast { background: var(--green-bg); color: var(--green-tx); }
   .days-med  { background: var(--amber-bg); color: var(--amber-tx); }
   .days-slow { background: var(--red-bg);   color: var(--red-tx); }
   .days-na   { background: var(--gray-bg);  color: var(--gray-tx); }
-
   .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
   .b-delay   { background: var(--red-bg);   color: var(--red-tx); }
   .b-transit { background: var(--amber-bg); color: var(--amber-tx); }
@@ -79,25 +70,19 @@
   .b-clear   { background: var(--blue-bg);  color: var(--blue-tx); }
   .b-update  { background: var(--pink-bg);  color: var(--pink-tx); }
   .b-default { background: var(--gray-bg);  color: var(--gray-tx); }
-
   .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 0.5px solid var(--border); }
   .tab { font-size: 13px; padding: 8px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; transition: all .15s; }
   .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
-
   .fedex-link { color: var(--muted); font-size: 12px; font-family: monospace; }
   .fedex-link:hover { color: var(--text); text-decoration: underline; }
-
   #loader, #error-msg { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; }
   #error-msg { color: var(--red-tx); }
   .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--muted); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .refresh-btn { font-size: 12px; padding: 6px 14px; border: 0.5px solid var(--border); border-radius: 20px; background: transparent; color: var(--muted); cursor: pointer; }
   .refresh-btn:hover { background: var(--card); color: var(--text); }
   .refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
-
   #transit-summary { display: none; }
-
   @media (max-width: 640px) {
     header { padding: 14px 16px; }
     main { padding: 16px 12px; }
@@ -116,17 +101,13 @@
 
 <main>
   <div class="stats" id="stats-bar"></div>
-
   <div class="tabs">
     <button class="tab active" onclick="switchTab('active', this)">Active shipments</button>
     <button class="tab" onclick="switchTab('delivered', this)">Delivered</button>
   </div>
-
-  <!-- Transit day summary — shown only on Delivered tab -->
   <div id="transit-summary">
     <div class="transit-summary" id="transit-cards"></div>
   </div>
-
   <div class="toolbar">
     <input class="search" id="search" type="text" placeholder="Search tracking #, part, location…" oninput="render()">
     <div id="filter-pills">
@@ -136,10 +117,8 @@
       <button class="pill" onclick="setFilter('transit', this)">In transit</button>
     </div>
   </div>
-
   <div id="loader"><span class="spinner"></span>Loading shipments…</div>
   <div id="error-msg" style="display:none"></div>
-
   <div class="table-wrap" id="table-wrap" style="display:none">
     <table>
       <thead id="thead"></thead>
@@ -150,10 +129,7 @@
 </main>
 
 <script>
-// ╔══════════════════════════════════════════════════════════╗
-// ║  REPLACE THIS with your Apps Script Web App URL         ║
-// ╚══════════════════════════════════════════════════════════╝
-const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwhukCiEcKhSvEM_Wj3SX4TwcDB1cbQZfmZKGD-QEAlRqsgnouiZQro2neTojASZEC8/exec";
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyTzfWHx3qdNOlS3BcfJoTM4rhOnXCzCuh4Bv4lvB77tqEHU4ZIjaMuXiU8M0H0KLw6/exec";
 
 let allData = { active: [], delivered: [] };
 let activeTab = "active";
@@ -190,9 +166,8 @@ function buildStats() {
   const count = (fn) => rows.filter(fn).length;
   const days = delivered.map(r => transitDays(r)).filter(d => d !== null);
   const avgDays = days.length ? Math.round(days.reduce((a,b)=>a+b,0)/days.length) : null;
-
   document.getElementById("stats-bar").innerHTML = [
-    [rows.length,      "Active shipments"],
+    [rows.length, "Active shipments"],
     [count(r => /delay|exception|failure/i.test(r.status+" "+r.event)), "Clearance delays"],
     [count(r => /clearance in progress/i.test(r.event)), "In clearance"],
     [delivered.length, "Delivered"],
@@ -200,12 +175,10 @@ function buildStats() {
   ].map(([v,l]) => `<div class="stat"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`).join("");
 }
 
-// Returns integer transit days or null
 function transitDays(r) {
   if (!r.shipDate) return null;
   const ship = parseDate(r.shipDate);
   if (!ship) return null;
-  // Delivery date: use updated date if event=Delivered, otherwise today
   const deliv = parseDate(r.updated) || new Date();
   const diff = Math.round((deliv - ship) / 86400000);
   return diff >= 0 ? diff : null;
@@ -226,17 +199,12 @@ function daysPillClass(d) {
 
 function buildTransitSummary(rows) {
   const days = rows.map(r => transitDays(r)).filter(d => d !== null);
-  if (!days.length) {
-    document.getElementById("transit-summary").style.display = "none";
-    return;
-  }
-  const sum = days.reduce((a,b)=>a+b,0);
-  const avg = Math.round(sum / days.length);
+  if (!days.length) { document.getElementById("transit-summary").style.display = "none"; return; }
+  const avg = Math.round(days.reduce((a,b)=>a+b,0) / days.length);
   const min = Math.min(...days);
   const max = Math.max(...days);
   const fastest = rows.find(r => transitDays(r) === min);
   const slowest = rows.find(r => transitDays(r) === max);
-
   document.getElementById("transit-cards").innerHTML = `
     <div class="transit-card"><div class="tc-val">${avg}</div><div class="tc-lbl">Avg transit days</div></div>
     <div class="transit-card"><div class="tc-val">${min}</div><div class="tc-lbl">Fastest · ${fastest ? fastest.part||fastest.tracking : ""}</div></div>
@@ -251,8 +219,6 @@ function switchTab(tab, el) {
   activeFilter = "all";
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   el.classList.add("active");
-
-  // swap filter pills
   const fp = document.getElementById("filter-pills");
   if (tab === "delivered") {
     fp.innerHTML = `<button class="pill active" onclick="setFilter('all',this)">All</button>
@@ -267,7 +233,7 @@ function switchTab(tab, el) {
     document.getElementById("transit-summary").style.display = "none";
   }
   sortKey = tab === "delivered" ? "transitDays" : "status";
-  sortDir = tab === "delivered" ? 1 : 1;
+  sortDir = 1;
   render();
 }
 
@@ -299,7 +265,6 @@ function render() {
   const src = activeTab === "active" ? allData.active : allData.delivered;
   let rows = [...(src || [])];
   const q = document.getElementById("search").value.toLowerCase().trim();
-
   rows = rows.filter(r => {
     if (q && !Object.values(r).join(" ").toLowerCase().includes(q)) return false;
     if (activeFilter === "all") return true;
@@ -313,29 +278,22 @@ function render() {
     if (activeFilter === "slow") return d !== null && d >= 15;
     return true;
   });
-
-  // Sort
   rows.sort((a, b) => {
-    let av, bv;
     if (sortKey === "transitDays") {
-      av = transitDays(a) ?? 9999;
-      bv = transitDays(b) ?? 9999;
+      const av = transitDays(a) ?? 9999;
+      const bv = transitDays(b) ?? 9999;
       return (av - bv) * sortDir;
     }
-    av = String(a[sortKey]||"").toLowerCase();
-    bv = String(b[sortKey]||"").toLowerCase();
+    const av = String(a[sortKey]||"").toLowerCase();
+    const bv = String(b[sortKey]||"").toLowerCase();
     return av < bv ? -sortDir : av > bv ? sortDir : 0;
   });
-
   document.getElementById("loader").style.display = "none";
   const wrap = document.getElementById("table-wrap");
   const empty = document.getElementById("empty-msg");
-
   if (!rows.length) { wrap.style.display="none"; empty.style.display="block"; document.getElementById("transit-summary").style.display="none"; return; }
   wrap.style.display = "block"; empty.style.display = "none";
-
   const fedexBase = "https://www.fedex.com/fedextrack/?trknbr=";
-
   if (activeTab === "delivered") {
     buildTransitSummary(rows);
     document.getElementById("thead").innerHTML = `<tr>
