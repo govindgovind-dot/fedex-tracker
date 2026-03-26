@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SSW Logistic Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f4f0; --card: #ffffff; --border: rgba(0,0,0,0.10);
+    --text: #1a1a19; --muted: #6b6b67; --hint: #9a9994;
+    --red-bg: #fce8e8; --red-tx: #7a1f1f;
+    --amber-bg: #fdf3dc; --amber-tx: #5a3606;
+    --blue-bg: #e6f1fb; --blue-tx: #0c447c;
+    --green-bg: #eaf3de; --green-tx: #27500a;
+    --gray-bg: #f0eee8; --gray-tx: #444441;
+    --pink-bg: #fbeaf0; --pink-tx: #72243e;
+    --teal-bg: #e1f5ee; --teal-tx: #085041;
+    --radius: 12px; --sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1b19; --card: #252420; --border: rgba(255,255,255,0.10);
+      --text: #e8e6de; --muted: #9a9890; --hint: #6a6860;
+      --red-bg: #3d1414; --red-tx: #f09595;
+      --amber-bg: #3a2608; --amber-tx: #fac775;
+      --blue-bg: #0a2640; --blue-tx: #85b7eb;
+      --green-bg: #152808; --green-tx: #c0dd97;
+      --gray-bg: #2a2926; --gray-tx: #d3d1c7;
+      --pink-bg: #2e0f1d; --pink-tx: #f4c0d1;
+      --teal-bg: #04342c; --teal-tx: #9fe1cb;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.6; }
+  header { background: var(--card); border-bottom: 0.5px solid var(--border); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  #last-refresh { font-size: 12px; color: var(--hint); }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+  .top-tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; }
+  .top-tab { font-size: 13px; padding: 10px 20px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; transition: all .15s; }
+  .top-tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .stat { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--sm); padding: 14px 16px; }
+  .stat-val { font-size: 24px; font-weight: 600; line-height: 1; }
+  .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat.green .stat-val { color: var(--green-tx); }
+  .stat.red .stat-val { color: var(--red-tx); }
+  .stat.amber .stat-val { color: var(--amber-tx); }
+  .stat.blue .stat-val { color: var(--blue-tx); }
+
+  .speed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .speed-card { border-radius: var(--radius); padding: 20px; border: 0.5px solid var(--border); }
+  .speed-card.fast { background: var(--green-bg); }
+  .speed-card.med  { background: var(--amber-bg); }
+  .speed-card.slow { background: var(--red-bg); }
+  .speed-icon { font-size: 26px; margin-bottom: 6px; }
+  .speed-val { font-size: 38px; font-weight: 700; line-height: 1; }
+  .speed-card.fast .speed-val,.speed-card.fast .speed-lbl,.speed-card.fast .speed-sub { color: var(--green-tx); }
+  .speed-card.med  .speed-val,.speed-card.med  .speed-lbl,.speed-card.med  .speed-sub { color: var(--amber-tx); }
+  .speed-card.slow .speed-val,.speed-card.slow .speed-lbl,.speed-card.slow .speed-sub { color: var(--red-tx); }
+  .speed-lbl { font-size: 14px; font-weight: 500; margin-top: 4px; }
+  .speed-sub { font-size: 12px; opacity: .7; margin-top: 2px; }
+  .speed-bar-bg { height: 5px; background: rgba(0,0,0,.1); border-radius: 3px; margin-top: 16px; }
+  .speed-bar-fill { height: 5px; border-radius: 3px; transition: width .8s ease; }
+  .fast .speed-bar-fill { background: var(--green-tx); }
+  .med  .speed-bar-fill { background: var(--amber-tx); }
+  .slow .speed-bar-fill { background: var(--red-tx); }
+
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .chart-card h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .kpi { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--sm); padding: 14px 16px; }
+  .kpi-label { font-size: 12px; color: var(--muted); }
+  .kpi-value { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .kpi-sub { font-size: 11px; color: var(--hint); margin-top: 2px; }
+  .kpi-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 4px; }
+  .bg-green { background: var(--green-bg); color: var(--green-tx); }
+  .bg-red   { background: var(--red-bg);   color: var(--red-tx); }
+  .bg-amber { background: var(--amber-bg); color: var(--amber-tx); }
+
+  .leaderboard { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .leaderboard h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { font-size: 12px; font-weight: 700; color: var(--hint); width: 18px; }
+  .lb-info { flex: 1; min-width: 0; }
+  .lb-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-detail { font-size: 11px; color: var(--muted); }
+
+  .transit-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .transit-card { background: var(--teal-bg); border: 0.5px solid rgba(0,0,0,.06); border-radius: var(--sm); padding: 14px 16px; }
+  .transit-card .tc-val { font-size: 26px; font-weight: 700; color: var(--teal-tx); line-height: 1; }
+  .transit-card .tc-lbl { font-size: 12px; color: var(--teal-tx); opacity: .75; margin-top: 4px; }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .pill { font-size: 12px; padding: 5px 13px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .search { flex: 1; min-width: 160px; max-width: 320px; padding: 6px 12px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--card); color: var(--text); font-size: 13px; outline: none; }
+
+  .table-wrap { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--hint); padding: 10px 14px; text-align: left; border-bottom: 0.5px solid var(--border); background: var(--card); white-space: nowrap; }
+  td { padding: 11px 14px; border-bottom: 0.5px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+
+  .days-pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+  .days-fast { background: var(--green-bg); color: var(--green-tx); }
+  .days-med  { background: var(--amber-bg); color: var(--amber-tx); }
+  .days-slow { background: var(--red-bg);   color: var(--red-tx); }
+  .days-na   { background: var(--gray-bg);  color: var(--gray-tx); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+  .b-delay   { background: var(--red-bg);   color: var(--red-tx); }
+  .b-transit { background: var(--amber-bg); color: var(--amber-tx); }
+  .b-deliver { background: var(--green-bg); color: var(--green-tx); }
+  .b-clear   { background: var(--blue-bg);  color: var(--blue-tx); }
+  .b-update  { background: var(--pink-bg);  color: var(--pink-tx); }
+  .b-default { background: var(--gray-bg);  color: var(--gray-tx); }
+
+  .fedex-link { color: var(--muted); font-size: 12px; font-family: monospace; }
+  .fedex-link:hover { color: var(--text); text-decoration: underline; }
+  #loader,#error-msg { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; }
+  #error-msg { color: var(--red-tx); }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--muted); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .refresh-btn { font-size: 12px; padding: 6px 14px; border: 0.5px solid var(--border); border-radius: 20px; background: transparent; color: var(--muted); cursor: pointer; }
+  .refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .sec-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+  .prog-wrap { margin-bottom: 10px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text); }
+  .prog-label span:last-child { color: var(--muted); }
+  .prog-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 6px; border-radius: 3px; transition: width .8s ease; }
+  #transit-summary-wrap { display: none; }
+  @media(max-width:768px){.speed-grid,.chart-grid{grid-template-columns:1fr}header,main{padding:14px 12px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>SSW Logistic Tracker</h1><div id="last-refresh">Loading…</div></div>
+  <button class="refresh-btn" id="refresh-btn" onclick="loadData()">↻ Refresh</button>
+</header>
+<main>
+  <div id="loader"><span class="spinner"></span>Loading shipments…</div>
+  <div id="error-msg" style="display:none"></div>
+  <div id="main-content" style="display:none">
+    <div class="top-tabs">
+      <button class="top-tab active" onclick="switchMain('dashboard',this)">Dashboard</button>
+      <button class="top-tab" onclick="switchMain('active',this)">Active shipments</button>
+      <button class="top-tab" onclick="switchMain('delivered',this)">Delivered</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="section-dashboard" class="section active">
+      <div class="stats" id="dash-stats"></div>
+      <p class="sec-title">Delivery speed performance</p>
+      <div class="speed-grid" id="speed-grid"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Transit time distribution</h3><div class="chart-wrap"><canvas id="ct1"></canvas></div></div>
+        <div class="chart-card"><h3>Speed breakdown</h3><div class="chart-wrap"><canvas id="ct2"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Service type volume</h3><div class="chart-wrap"><canvas id="ct3"></canvas></div></div>
+        <div class="chart-card"><h3>Active shipment status</h3><div class="chart-wrap"><canvas id="ct4"></canvas></div></div>
+      </div>
+      <p class="sec-title">Key performance indicators</p>
+      <div class="kpi-row" id="kpi-row"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Avg transit days by service</h3><div id="svc-bars"></div></div>
+        <div class="chart-card"><h3>Monthly delivery volume</h3><div class="chart-wrap"><canvas id="ct5"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="leaderboard"><h3>Fastest deliveries</h3><div id="lb-fast"></div></div>
+        <div class="leaderboard"><h3>Slowest deliveries</h3><div id="lb-slow"></div></div>
+      </div>
+    </div>
+
+    <!-- ACTIVE -->
+    <div id="section-active" class="section">
+      <div class="stats" id="active-stats"></div>
+      <div class="toolbar">
+        <input class="search" id="search-active" type="text" placeholder="Search tracking #, part, location…" oninput="renderActive()">
+        <div id="fp-active">
+          <button class="pill active" onclick="setF('all',this,'a')">All</button>
+          <button class="pill" onclick="setF('delay',this,'a')">Clearance delay</button>
+          <button class="pill" onclick="setF('clear',this,'a')">In clearance</button>
+          <button class="pill" onclick="setF('transit',this,'a')">In transit</button>
+          <button class="pill" onclick="setF('update',this,'a')">On the way</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="active-wrap" style="display:none"><table><thead id="active-head"></thead><tbody id="active-body"></tbody></table></div>
+      <div id="active-empty" style="display:none;text-align:center;padding:40px;color:var(--muted)">No shipments match.</div>
+    </div>
+
+    <!-- DELIVERED -->
+    <div id="section-delivered" class="section">
+      <div id="transit-summary-wrap"><div class="transit-summary" id="transit-cards"></div></div>
+      <div class="toolbar">
+        <input class="search" id="search-del" type="text" placeholder="Search tracking #, part, location…" oninput="renderDel()">
+        <div id="fp-del">
+          <button class="pill active" onclick="setF('all',this,'d')">All</button>
+          <button class="pill" onclick="setF('fast',this,'d')">⚡ Fast (≤7 days)</button>
+          <button class="pill" onclick="setF('med',this,'d')">🕐 Medium (8–14)</button>
+          <button class="pill" onclick="setF('slow',this,'d')">🐢 Slow (15+)</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="del-wrap" style="display:none"><table><thead id="del-head"></thead><tbody id="del-body"></tbody></table></div>
+      <div id="del-empty" style="display:none;text-align:center;padding:40px;color:var(--muted)">No shipments match.</div>
+    </div>
+  </div>
+</main>
+<script>
+const SHEET_API_URL="https://script.google.com/macros/s/AKfycbyd8HDUgnDzctU8J2uDrZn3cThXjmRwlBUdXUwWm1Qt06vrDtUDZ0hrlWHRrCp95Fo/exec";
+let allData={active:[],delivered:[]},fA="all",fD="all",CC={};
+
+function loadData(){
+  const btn=document.getElementById("refresh-btn");btn.disabled=true;
+  document.getElementById("loader").style.display="block";
+  document.getElementById("main-content").style.display="none";
+  document.getElementById("error-msg").style.display="none";
+  const old=document.getElementById("jsonp-script");if(old)old.remove();
+  const timer=setTimeout(()=>{btn.disabled=false;document.getElementById("loader").style.display="none";document.getElementById("error-msg").style.display="block";document.getElementById("error-msg").textContent="Request timed out.";},15000);
+  window.__sswCallback=function(data){
+    clearTimeout(timer);btn.disabled=false;
+    document.getElementById("loader").style.display="none";
+    try{allData=data;document.getElementById("last-refresh").textContent="Updated "+new Date(allData.ts).toLocaleTimeString();document.getElementById("main-content").style.display="block";buildDash();renderActive();renderDel();}
+    catch(e){document.getElementById("error-msg").style.display="block";document.getElementById("error-msg").textContent="Data error: "+e.message;}
+  };
+  const s=document.createElement("script");s.id="jsonp-script";
+  s.onerror=()=>{clearTimeout(timer);btn.disabled=false;document.getElementById("loader").style.display="none";document.getElementById("error-msg").style.display="block";document.getElementById("error-msg").textContent="Could not reach Apps Script.";};
+  s.src=SHEET_API_URL+"?callback=__sswCallback&t="+Date.now();document.body.appendChild(s);
+}
+
+function pd(str){if(!str)return null;const d=new Date(str);return isNaN(d)?null:d;}
+function td(r){if(!r.shipDate)return null;const s=pd(r.shipDate);if(!s)return null;const e=pd(r.actualDelivery)||pd(r.updated)||new Date();const d=Math.round((e-s)/86400000);return d>=0?d:null;}
+function dpc(d){if(d===null)return"days-na";if(d<=7)return"days-fast";if(d<=14)return"days-med";return"days-slow";}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function bc(status,event){const s=(status+" "+event).toLowerCase();if(/delay|exception|failure|undeliverable|cancel/i.test(s))return"b-delay";if(/clearance in progress/i.test(s))return"b-clear";if(/delivered/i.test(s))return"b-deliver";if(/in transit|out for delivery|on vehicle|at fedex|picked up/i.test(s))return"b-transit";if(/delivery updated|update|on the way|destination sort/i.test(s))return"b-update";return"b-default";}
+function pct(a,b){return b?Math.round(a/b*100):0;}
+function dk(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;}
+function gc(){return dk()?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)";}
+function tc(){return dk()?"#9a9890":"#6b6b67";}
+function dc(id){if(CC[id]){CC[id].destroy();delete CC[id];}}
+
+function buildDash(){
+  const act=allData.active||[],del=allData.delivered||[];
+  const days=del.map(r=>td(r)).filter(d=>d!==null);
+  const fast=days.filter(d=>d<=7),med=days.filter(d=>d>=8&&d<=14),slow=days.filter(d=>d>=15);
+  const avg=days.length?Math.round(days.reduce((a,b)=>a+b,0)/days.length):0;
+  const mn=days.length?Math.min(...days):0,mx=days.length?Math.max(...days):0;
+  const delays=act.filter(r=>/delay|exception|failure/i.test(r.status+" "+r.event)).length;
+  const onway=act.filter(r=>/delivery updated|on the way|destination sort/i.test(r.status+" "+r.event)).length;
+  const total=days.length||1;
+
+  document.getElementById("dash-stats").innerHTML=[
+    [act.length,"Active shipments","blue"],
+    [delays,"Clearance delays","red"],
+    [onway,"On the way","amber"],
+    [del.length,"Total delivered","green"],
+    [avg?avg+" days":"—","Avg transit",""],
+    [mn?mn+" days":"—","Fastest ever","green"],
+    [mx?mx+" days":"—","Slowest ever","red"],
+    [days.length,"With ship data",""],
+  ].map(([v,l,c])=>`<div class="stat ${c}"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`).join("");
+
+  document.getElementById("speed-grid").innerHTML=`
+    <div class="speed-card fast">
+      <div class="speed-icon">⚡</div><div class="speed-val">${fast.length}</div>
+      <div class="speed-lbl">Fast delivery</div><div class="speed-sub">≤ 7 days · ${pct(fast.length,total)}% of all delivered</div>
+      <div class="speed-bar-bg"><div class="speed-bar-fill" style="width:${pct(fast.length,total)}%"></div></div>
+    </div>
+    <div class="speed-card med">
+      <div class="speed-icon">🕐</div><div class="speed-val">${med.length}</div>
+      <div class="speed-lbl">Medium delivery</div><div class="speed-sub">8–14 days · ${pct(med.length,total)}% of all delivered</div>
+      <div class="speed-bar-bg"><div class="speed-bar-fill" style="width:${pct(med.length,total)}%"></div></div>
+    </div>
+    <div class="speed-card slow">
+      <div class="speed-icon">🐢</div><div class="speed-val">${slow.length}</div>
+      <div class="speed-lbl">Slow delivery</div><div class="speed-sub">15+ days · ${pct(slow.length,total)}% of all delivered</div>
+      <div class="speed-bar-bg"><div class="speed-bar-fill" style="width:${pct(slow.length,total)}%"></div></div>
+    </div>`;
+
+  // Chart 1 - transit distribution
+  dc("c1");
+  const bk={"1-7":0,"8-14":0,"15-21":0,"22-30":0,"31-45":0,"46+":0};
+  days.forEach(d=>{if(d<=7)bk["1-7"]++;else if(d<=14)bk["8-14"]++;else if(d<=21)bk["15-21"]++;else if(d<=30)bk["22-30"]++;else if(d<=45)bk["31-45"]++;else bk["46+"]++;});
+  CC["c1"]=new Chart(document.getElementById("ct1"),{type:"bar",data:{labels:Object.keys(bk),datasets:[{label:"Shipments",data:Object.values(bk),backgroundColor:["#1d9e75","#1d9e75","#ba7517","#ba7517","#e24b4a","#a32d2d"],borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:11}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:11},stepSize:1}}}}});
+
+  // Chart 2 - donut
+  dc("c2");
+  CC["c2"]=new Chart(document.getElementById("ct2"),{type:"doughnut",data:{labels:["Fast ≤7d","Medium 8-14d","Slow 15+d"],datasets:[{data:[fast.length,med.length,slow.length],backgroundColor:["#1d9e75","#ba7517","#e24b4a"],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:"65%",plugins:{legend:{position:"bottom",labels:{color:tc(),font:{size:11},padding:12,boxWidth:12}}}}});
+
+  // Chart 3 - service type
+  dc("c3");
+  const svc={};del.forEach(r=>{const s=r.service||"Unknown";svc[s]=(svc[s]||0)+1;});
+  const sv=Object.entries(svc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  CC["c3"]=new Chart(document.getElementById("ct3"),{type:"bar",data:{labels:sv.map(([k])=>k.replace("FedEx ","").replace(" Freight","").replace("International ","Intl ")),datasets:[{label:"Shipments",data:sv.map(([,v])=>v),backgroundColor:["#378add","#1d9e75","#ba7517","#7f77dd","#d4537e","#888780"],borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:11}}},y:{grid:{display:false},ticks:{color:tc(),font:{size:11}}}}}});
+
+  // Chart 4 - active status
+  dc("c4");
+  const as={"Clearance Delay":0,"On the way":0,"In Transit":0,"Other":0};
+  act.forEach(r=>{const s=(r.status+" "+r.event).toLowerCase();if(/delay|exception/i.test(s))as["Clearance Delay"]++;else if(/delivery updated|on the way|destination sort/i.test(s))as["On the way"]++;else if(/in transit|out for delivery/i.test(s))as["In Transit"]++;else as["Other"]++;});
+  CC["c4"]=new Chart(document.getElementById("ct4"),{type:"doughnut",data:{labels:Object.keys(as),datasets:[{data:Object.values(as),backgroundColor:["#e24b4a","#f4c0d1","#1d9e75","#888780"],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{color:tc(),font:{size:11},padding:10,boxWidth:12}}}}});
+
+  // KPIs
+  const med_val=days.length?[...days].sort((a,b)=>a-b)[Math.floor(days.length/2)]:0;
+  const otRate=pct(fast.length+med.length,total);
+  const dlRate=act.length?pct(delays,act.length):0;
+  document.getElementById("kpi-row").innerHTML=[
+    ["On-time rate",otRate+"%","Delivered ≤14 days",otRate>=70?"bg-green":otRate>=40?"bg-amber":"bg-red"],
+    ["Delay rate",dlRate+"%","Active shipments delayed",dlRate>50?"bg-red":dlRate>20?"bg-amber":"bg-green"],
+    ["Median transit",med_val+" days","p50 value",""],
+    ["Avg transit",avg+" days","All delivered",""],
+    ["Fastest",mn+" days","Best recorded","bg-green"],
+    ["Slowest",mx+" days","Worst recorded","bg-red"],
+    ["Total active",act.length,"Live shipments","bg-amber"],
+    ["Total delivered",del.length,"All time","bg-green"],
+  ].map(([l,v,s,b])=>`<div class="kpi"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${s}</div>${b?`<span class="kpi-badge ${b}">${v}</span>`:""}</div>`).join("");
+
+  // Service bars
+  const sa={},sc={};
+  del.forEach(r=>{const d=td(r);if(d===null)return;const s=(r.service||"Unknown").replace("FedEx ","").replace(" Freight","").replace("International ","Intl ");sa[s]=(sa[s]||0)+d;sc[s]=(sc[s]||0)+1;});
+  const se=Object.entries(sa).map(([k,v])=>[k,Math.round(v/sc[k])]).sort((a,b)=>a[1]-b[1]).slice(0,6);
+  const mx2=Math.max(...se.map(([,v])=>v))||1;
+  document.getElementById("svc-bars").innerHTML=se.map(([n,d])=>{const cl=d<=7?"#1d9e75":d<=14?"#ba7517":"#e24b4a";return`<div class="prog-wrap"><div class="prog-label"><span>${n}</span><span>${d} days avg</span></div><div class="prog-bg"><div class="prog-fill" style="width:${pct(d,mx2)}%;background:${cl}"></div></div></div>`;}).join("");
+
+  // Monthly chart
+  dc("c5");
+  const mc={};del.forEach(r=>{if(!r.actualDelivery)return;const d=pd(r.actualDelivery);if(!d)return;const k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");mc[k]=(mc[k]||0)+1;});
+  const ms=Object.entries(mc).sort((a,b)=>a[0].localeCompare(b[0])).slice(-12);
+  CC["c5"]=new Chart(document.getElementById("ct5"),{type:"line",data:{labels:ms.map(([k])=>{const[y,m]=k.split("-");return new Date(y,m-1).toLocaleString("default",{month:"short",year:"2-digit"});}),datasets:[{label:"Delivered",data:ms.map(([,v])=>v),borderColor:"#1d9e75",backgroundColor:"rgba(29,158,117,0.1)",borderWidth:2,pointBackgroundColor:"#1d9e75",pointRadius:3,tension:0.35,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:11}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:11},stepSize:5}}}}});
+
+  // Leaderboards
+  const wd=del.map(r=>({...r,days:td(r)})).filter(r=>r.days!==null);
+  const fl=[...wd].sort((a,b)=>a.days-b.days).slice(0,5);
+  const sl=[...wd].sort((a,b)=>b.days-a.days).slice(0,5);
+  const rLb=(rows,isF)=>rows.map((r,i)=>`<div class="lb-row"><div class="lb-rank">${i+1}</div><div class="lb-info"><div class="lb-name">${esc(r.part||r.tracking)}</div><div class="lb-detail">${esc(r.tracking)} · ${esc(r.shipDate||"")} → ${esc(r.actualDelivery||"")}</div></div><span class="days-pill ${isF?"days-fast":"days-slow"}">${r.days}d</span></div>`).join("");
+  document.getElementById("lb-fast").innerHTML=rLb(fl,true);
+  document.getElementById("lb-slow").innerHTML=rLb(sl,false);
+}
+
+function renderActive(){
+  const rows=(allData.active||[]).filter(r=>{
+    const q=(document.getElementById("search-active")||{value:""}).value.toLowerCase().trim();
+    if(q&&!Object.values(r).join(" ").toLowerCase().includes(q))return false;
+    const combo=(r.status+" "+r.event).toLowerCase();
+    if(fA==="all")return true;
+    if(fA==="delay")return/delay|exception|failure|undeliverable|cancel/.test(combo);
+    if(fA==="clear")return/clearance in progress/.test(combo);
+    if(fA==="transit")return/in transit|out for delivery|on vehicle|at fedex|picked up/.test(combo);
+    if(fA==="update")return/delivery updated|on the way|destination sort/.test(combo);
+    return true;
+  });
+  const delays=rows.filter(r=>/delay|exception|failure/i.test(r.status+" "+r.event)).length;
+  const onway=rows.filter(r=>/delivery updated|on the way|destination sort/i.test(r.status+" "+r.event)).length;
+  document.getElementById("active-stats").innerHTML=[
+    [rows.length,"Shipments showing","blue"],
+    [delays,"Clearance delays","red"],
+    [onway,"On the way","amber"],
+  ].map(([v,l,c])=>`<div class="stat ${c}"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`).join("");
+  const wrap=document.getElementById("active-wrap"),empty=document.getElementById("active-empty");
+  if(!rows.length){wrap.style.display="none";empty.style.display="block";return;}
+  wrap.style.display="block";empty.style.display="none";
+  const fb="https://www.fedex.com/fedextrack/?trknbr=";
+  document.getElementById("active-head").innerHTML=`<tr><th style="width:148px">Tracking #</th><th style="width:130px">Part / Ref</th><th style="width:160px">Status</th><th style="width:140px">Location</th><th>Last event</th><th style="width:110px">Est. delivery</th><th style="width:140px">Updated</th></tr>`;
+  document.getElementById("active-body").innerHTML=rows.map(r=>{const b=bc(r.status,r.event);const ts=r.tracking.length>18?r.tracking.slice(0,15)+"…":r.tracking;return`<tr><td><a class="fedex-link" href="${fb}${encodeURIComponent(r.tracking)}" target="_blank" title="${esc(r.tracking)}">${esc(ts)}</a></td><td title="${esc(r.part)}">${esc(r.part)}</td><td><span class="badge ${b}">${esc(r.status||r.event||"—")}</span></td><td>${esc(r.location||"—")}</td><td style="color:var(--muted)" title="${esc(r.event)}">${esc(r.event||"—")}</td><td>${esc(r.eta||"—")}</td><td style="color:var(--hint)">${esc(r.updated||"—")}</td></tr>`;}).join("");
+}
+
+function renderDel(){
+  let rows=(allData.delivered||[]).filter(r=>{
+    const q=(document.getElementById("search-del")||{value:""}).value.toLowerCase().trim();
+    if(q&&!Object.values(r).join(" ").toLowerCase().includes(q))return false;
+    if(fD==="all")return true;
+    const d=td(r);
+    if(fD==="fast")return d!==null&&d<=7;
+    if(fD==="med")return d!==null&&d>=8&&d<=14;
+    if(fD==="slow")return d!==null&&d>=15;
+    return true;
+  });
+  const days=rows.map(r=>td(r)).filter(d=>d!==null);
+  if(days.length){
+    const avg=Math.round(days.reduce((a,b)=>a+b,0)/days.length);
+    const mn=Math.min(...days),mx=Math.max(...days);
+    const fs=rows.find(r=>td(r)===mn),sl=rows.find(r=>td(r)===mx);
+    document.getElementById("transit-cards").innerHTML=`<div class="transit-card"><div class="tc-val">${avg}</div><div class="tc-lbl">Avg transit days</div></div><div class="transit-card"><div class="tc-val">${mn}</div><div class="tc-lbl">Fastest · ${fs?esc(fs.part||fs.tracking):""}</div></div><div class="transit-card"><div class="tc-val">${mx}</div><div class="tc-lbl">Slowest · ${sl?esc(sl.part||sl.tracking):""}</div></div><div class="transit-card"><div class="tc-val">${rows.length}</div><div class="tc-lbl">Filtered shipments</div></div>`;
+    document.getElementById("transit-summary-wrap").style.display="block";
+  } else document.getElementById("transit-summary-wrap").style.display="none";
+  const wrap=document.getElementById("del-wrap"),empty=document.getElementById("del-empty");
+  if(!rows.length){wrap.style.display="none";empty.style.display="block";return;}
+  wrap.style.display="block";empty.style.display="none";
+  const fb="https://www.fedex.com/fedextrack/?trknbr=";
+  document.getElementById("del-head").innerHTML=`<tr><th style="width:140px">Tracking #</th><th style="width:120px">Part / Ref</th><th style="width:100px">Ship date</th><th style="width:110px">Delivered</th><th style="width:110px">Transit days</th><th style="width:130px">Location</th><th style="width:160px">Service type</th><th>Last event</th></tr>`;
+  document.getElementById("del-body").innerHTML=rows.map(r=>{const d=td(r);const pc=dpc(d);const dl=d!==null?d+" day"+(d===1?"":"s"):"—";const ts=r.tracking.length>18?r.tracking.slice(0,15)+"…":r.tracking;return`<tr><td><a class="fedex-link" href="${fb}${encodeURIComponent(r.tracking)}" target="_blank" title="${esc(r.tracking)}">${esc(ts)}</a></td><td title="${esc(r.part)}">${esc(r.part)}</td><td style="color:var(--muted)">${esc(r.shipDate||"—")}</td><td style="color:var(--muted)">${esc(r.updated||"—")}</td><td><span class="days-pill ${pc}">${dl}</span></td><td>${esc(r.location||"—")}</td><td style="color:var(--muted)">${esc(r.service||"—")}</td><td style="color:var(--muted)" title="${esc(r.event)}">${esc(r.event||"—")}</td></tr>`;}).join("");
+}
+
+function switchMain(tab,el){
+  document.querySelectorAll(".top-tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("section-"+tab).classList.add("active");
+}
+function setF(f,el,type){
+  if(type==="a"){fA=f;document.querySelectorAll("#fp-active .pill").forEach(p=>p.classList.remove("active"));}
+  else{fD=f;document.querySelectorAll("#fp-del .pill").forEach(p=>p.classList.remove("active"));}
+  el.classList.add("active");
+  if(type==="a")renderActive();else renderDel();
+}
+loadData();
+</script>
+</body>
+</html>
